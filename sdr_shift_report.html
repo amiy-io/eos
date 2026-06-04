@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SDR End of Shift Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #0d1117;
+    color: #fff;
+    font-family: 'Barlow', sans-serif;
+    font-size: 17px;
+    padding: 60px 48px;
+  }
+
+  .page { max-width: 1020px; margin: 0 auto; }
+
+  .header {
+    border-left: 6px solid #f6ca13;
+    padding-left: 24px;
+    margin-bottom: 64px;
+  }
+  .header .eyebrow {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 14px; font-weight: 600;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    color: #f6ca13; margin-bottom: 10px;
+  }
+  .header h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 56px; font-weight: 800;
+    line-height: 1; text-transform: uppercase;
+  }
+  .header h1 span { color: #f6ca13; }
+  .header .meta { margin-top: 12px; color: #6b7280; font-size: 16px; }
+
+  .section { margin-bottom: 56px; }
+
+  .section-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 22px; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: #f6ca13; margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid rgba(246,202,19,0.2);
+  }
+
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px; margin-bottom: 32px;
+  }
+  .stat {
+    background: #161b27; border: 1px solid #1e2536;
+    border-radius: 10px; padding: 28px 24px;
+  }
+  .stat .num {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 52px; font-weight: 800; line-height: 1; margin-bottom: 8px;
+  }
+  .stat .num.gold { color: #f6ca13; }
+  .stat .num.blue { color: #4da3ff; }
+  .stat .desc { font-size: 14px; color: #9ca3af; line-height: 1.4; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 16px; }
+  thead th {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 13px; font-weight: 700;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: #6b7280; text-align: left; padding: 0 0 14px;
+  }
+  tbody tr { border-top: 1px solid #1e2536; }
+  tbody td { padding: 14px 0; color: #e5e7eb; vertical-align: middle; }
+  td.date { font-weight: 600; width: 180px; }
+  td.count {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 22px; font-weight: 700; width: 60px; color: #fff;
+  }
+  td.pct {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 20px; font-weight: 700;
+    width: 70px; text-align: right; color: #f6ca13;
+  }
+  .bar-wrap { display: flex; align-items: center; }
+  .bar-bg { flex: 1; height: 8px; background: #1e2536; border-radius: 99px; overflow: hidden; }
+  .bar { height: 100%; border-radius: 99px; }
+  .bar.peak { background: linear-gradient(90deg, #034a92, #f6ca13); }
+  .bar.normal { background: #034a92; }
+
+  .blocker-row {
+    display: grid;
+    grid-template-columns: 220px 1fr 50px;
+    align-items: center; gap: 16px;
+    padding: 12px 0; border-top: 1px solid #1e2536;
+  }
+  .blocker-name { font-size: 16px; font-weight: 500; color: #e5e7eb; }
+  .blocker-count {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 20px; font-weight: 700; text-align: right; color: #fff;
+  }
+  .c1{background:#ef4444} .c2{background:#f97316} .c3{background:#eab308}
+  .c4{background:#84cc16} .c5{background:#22c55e} .c6{background:#06b6d4} .c7{background:#3b82f6}
+
+  .insight {
+    background: #161b27; border-left: 4px solid #f6ca13;
+    border-radius: 0 10px 10px 0; padding: 22px 28px;
+    margin-top: 24px; font-size: 16px; line-height: 1.75; color: #d1d5db;
+  }
+  .insight strong { color: #f6ca13; font-weight: 600; }
+
+  .takeaway {
+    background: #034a92; border-radius: 12px; padding: 36px 40px;
+  }
+  .takeaway .section-title { color: #f6ca13; border-color: rgba(246,202,19,0.3); }
+  .takeaway p { font-size: 18px; line-height: 1.8; color: #e5e7eb; }
+  .takeaway strong { color: #f6ca13; }
+
+  /* SDR SECTION */
+  .sdr-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+
+  .sdr-card {
+    background: #161b27;
+    border: 1px solid #1e2536;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    overflow: hidden;
+  }
+
+  .sdr-card:hover { border-color: #f6ca13; background: #1a2030; }
+  .sdr-card.open { border-color: #f6ca13; }
+
+  .sdr-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px;
+  }
+
+  .sdr-name {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 20px; font-weight: 700; color: #fff;
+  }
+
+  .sdr-meta {
+    font-size: 13px; color: #6b7280; margin-top: 2px;
+  }
+
+  .sdr-chevron {
+    font-size: 18px; color: #f6ca13;
+    transition: transform 0.25s;
+    flex-shrink: 0;
+  }
+
+  .sdr-card.open .sdr-chevron { transform: rotate(180deg); }
+
+  .sdr-body {
+    display: none;
+    padding: 0 20px 18px;
+    border-top: 1px solid #1e2536;
+  }
+
+  .sdr-card.open .sdr-body { display: block; }
+
+  .sdr-day {
+    padding: 12px 0;
+    border-bottom: 1px solid #1a2030;
+    font-size: 14px;
+  }
+
+  .sdr-day:last-child { border-bottom: none; }
+
+  .sdr-day-date {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 15px; font-weight: 700;
+    color: #f6ca13; margin-bottom: 6px;
+  }
+
+  .sdr-row {
+    display: flex; gap: 20px; margin-bottom: 5px; flex-wrap: wrap;
+  }
+
+  .sdr-pill {
+    background: #0d1117;
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: 13px; color: #9ca3af;
+  }
+
+  .sdr-pill span {
+    color: #fff; font-weight: 600;
+  }
+
+  .sdr-feedback {
+    margin-top: 6px;
+    font-size: 13px; color: #9ca3af; line-height: 1.5;
+    font-style: italic;
+  }
+
+  .sdr-feedback strong { color: #f6ca13; font-style: normal; font-weight: 600; }
+
+  .search-bar {
+    width: 100%;
+    background: #161b27;
+    border: 1px solid #1e2536;
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-family: 'Barlow', sans-serif;
+    font-size: 16px;
+    color: #fff;
+    margin-bottom: 20px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .search-bar:focus { border-color: #f6ca13; }
+  .search-bar::placeholder { color: #4b5563; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="eyebrow">Internal Report · May 26 – June 3, 2026</div>
+    <h1>End of Shift Form<br><span>Compliance & Activity</span></h1>
+    <div class="meta">7 working days &nbsp;·&nbsp; 60 SDRs on team &nbsp;·&nbsp; Self-reported data</div>
+  </div>
+
+  <!-- SUBMISSION OVERVIEW -->
+  <div class="section">
+    <div class="section-title">Submission Overview</div>
+    <div class="stat-grid">
+      <div class="stat">
+        <div class="num gold">53%</div>
+        <div class="desc">Of team submitted at least once (32 of 60 SDRs)</div>
+      </div>
+      <div class="stat">
+        <div class="num">117</div>
+        <div class="desc">Total submissions across 7 days</div>
+      </div>
+      <div class="stat">
+        <div class="num blue">~17</div>
+        <div class="desc">Average daily submissions</div>
+      </div>
+      <div class="stat">
+        <div class="num gold">28</div>
+        <div class="desc">SDRs with zero submissions — no visibility at all</div>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr><th>Date</th><th>Submission Rate</th><th>SDRs</th><th>%</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="date">May 26 — Tue</td><td><div class="bar-wrap"><div class="bar-bg"><div class="bar peak" style="width:47%"></div></div></div></td><td class="count">28</td><td class="pct">47%</td></tr>
+        <tr><td class="date">May 27 — Wed</td><td><div class="bar-wrap"><div class="bar-bg"><div class="bar normal" style="width:28%"></div></div></div></td><td class="count">17</td><td class="pct">28%</td></tr>
+        <tr><td class="date">May 28 — Thu</td><td><div class="bar-wrap"><div class="bar-bg"><div class="bar normal" style="width:23%"></div></div></div></td><td class="count">14</td><td class="pct">23%</td></tr>
+        <tr><td class="date">May 29 — Fri</td><td><div class="bar-wrap"><div class="bar-bg"><div class="bar normal" style="width:15%"></div></div></div></td><td class="count">9</td><td class="pct">15%</td></tr>
+        <tr><td class="date">Jun 01 — Mon</td><td><div class="bar-wrap"><div class="bar-bg"><div class="bar normal" style="width:17%"></div></div></div></td><td class="count">10</td><td class="pct">17%</td></tr>
+        <tr><td class="date">Jun 02 — Tue</td><td><div class="bar-wrap"><div class="bar-bg"><div class="bar normal" style="width:22%"></div></div></div></td><td class="count">13</td><td class="pct">22%</td></tr>
+        <tr><td class="date">Jun 03 — Wed</td><td><div class="bar-wrap"><div class="bar-bg"><div class="bar normal" style="width:15%"></div></div></div></td><td class="count">9</td><td class="pct">15%</td></tr>
+      </tbody>
+    </table>
+
+    <div class="insight">
+      The 53% "ever submitted" figure is misleading. <strong>On any given day, only 1 in 5 to 1 in 6 reps were submitting.</strong> Started at 47% on day one and dropped immediately — the last four days never got above 22%.
+    </div>
+  </div>
+
+  <!-- CALL ACTIVITY -->
+  <div class="section">
+    <div class="section-title">Call Activity (Self-Reported)</div>
+    <div class="stat-grid">
+      <div class="stat">
+        <div class="num gold">14,709</div>
+        <div class="desc">Total calls logged across all submissions</div>
+      </div>
+      <div class="stat">
+        <div class="num">126</div>
+        <div class="desc">Average calls per submission</div>
+      </div>
+      <div class="stat">
+        <div class="num">0–501</div>
+        <div class="desc">Range of calls in a single day</div>
+      </div>
+      <div class="stat">
+        <div class="num blue">511</div>
+        <div class="desc">Total real prospect conversations</div>
+      </div>
+      <div class="stat">
+        <div class="num gold">1:29</div>
+        <div class="desc">1 real conversation per 29 calls made</div>
+      </div>
+    </div>
+    <div class="insight">
+      The 1-in-29 ratio alone justifies daily tracking. <strong>If a rep averages 150 calls but only 1–2 real conversations, that's a coaching signal that's invisible without this form.</strong>
+    </div>
+  </div>
+
+  <!-- BLOCKERS -->
+  <div class="section">
+    <div class="section-title">Top Blockers Reported</div>
+    <div class="blocker-row" style="border-top:none;padding-top:0;">
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#6b7280;">Blocker</span>
+      <span></span>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#6b7280;text-align:right;">#</span>
+    </div>
+    <div class="blocker-row"><span class="blocker-name">CRM / Technical Issues</span><div class="bar-bg"><div class="bar c1" style="width:100%;height:8px;border-radius:99px;"></div></div><span class="blocker-count">39</span></div>
+    <div class="blocker-row"><span class="blocker-name">Sequence Quality</span><div class="bar-bg"><div class="bar c2" style="width:79%;height:8px;border-radius:99px;"></div></div><span class="blocker-count">31</span></div>
+    <div class="blocker-row"><span class="blocker-name">Confidence</span><div class="bar-bg"><div class="bar c3" style="width:49%;height:8px;border-radius:99px;"></div></div><span class="blocker-count">19</span></div>
+    <div class="blocker-row"><span class="blocker-name">Time Management</span><div class="bar-bg"><div class="bar c4" style="width:49%;height:8px;border-radius:99px;"></div></div><span class="blocker-count">19</span></div>
+    <div class="blocker-row"><span class="blocker-name">Objection Handling</span><div class="bar-bg"><div class="bar c5" style="width:44%;height:8px;border-radius:99px;"></div></div><span class="blocker-count">17</span></div>
+    <div class="blocker-row"><span class="blocker-name">Targeting</span><div class="bar-bg"><div class="bar c6" style="width:44%;height:8px;border-radius:99px;"></div></div><span class="blocker-count">17</span></div>
+    <div class="blocker-row"><span class="blocker-name">Personal Issues</span><div class="bar-bg"><div class="bar c7" style="width:26%;height:8px;border-radius:99px;"></div></div><span class="blocker-count">10</span></div>
+    <div class="insight">
+      <strong>CRM and technical issues are the #1 blocker by a wide margin</strong> — Apollo lagging, calls not connecting, emails not going through. Systemic drag. Sequence quality at #2 means even when reps are dialing, they don't trust what they're sending. <strong>Confidence and objection handling flagged consistently — a real, unresolved coaching gap.</strong>
+    </div>
+  </div>
+
+  <!-- SDR BREAKDOWN -->
+  <div class="section">
+    <div class="section-title">Individual SDR Breakdown — Click to Expand</div>
+    <input class="search-bar" type="text" placeholder="Search by name..." oninput="filterSDRs(this.value)" />
+    <div class="sdr-grid" id="sdrGrid"></div>
+  </div>
+
+  <!-- TAKEAWAY -->
+  <div class="takeaway">
+    <div class="section-title">Key Takeaway</div>
+    <p>In 7 days the form captured 14,000+ self-reported calls, identified the #1 team-wide blocker, and surfaced a clear coaching shortlist. The reps who submit consistently give management a daily read on ground-level reality. The ones who don't are a blind spot. <strong>Making this form non-negotiable before logging off isn't admin overhead — it's how you run a team with actual data.</strong></p>
+  </div>
+
+</div>
+
+<script>
+const sdrs = [
+  { name: "Adnan Davutov", days: [
+    { date: "May 26", calls: 140, convos: 3, blocker: "CRM/technical issues, Personal issues", feedback: "Lets get more meetings" },
+    { date: "May 27", calls: 140, convos: 3, blocker: "Targeting", feedback: "Enjoy the day off" },
+    { date: "May 28", calls: 125, convos: 1, blocker: "CRM/technical issues", feedback: "thank you" },
+    { date: "May 29", calls: 185, convos: 1, blocker: "Confidence", feedback: "Enjoy the weekend :)" },
+    { date: "Jun 01", calls: 152, convos: 1, blocker: "Sequence quality, Targeting", feedback: "Thank you" },
+    { date: "Jun 02", calls: 168, convos: 1, blocker: "Sequence quality", feedback: "New leads needed for this month other than the ones I self prospected" },
+    { date: "Jun 03", calls: 221, convos: 1, blocker: "CRM/technical issues, Confidence", feedback: "Need leads" }
+  ]},
+  { name: "Aldo Keci", days: [
+    { date: "May 26", calls: 20, convos: 9, blocker: "CRM/technical issues", feedback: "—" },
+    { date: "May 26", calls: 300, convos: 2, blocker: "Sequence quality", feedback: "I need more leads because I just ran out of them" },
+    { date: "Jun 02", calls: 106, convos: 1, blocker: "Sequence quality", feedback: "New leads for tomorrow" },
+    { date: "Jun 03", calls: 200, convos: 3, blocker: "Sequence quality", feedback: "Thankfully I got more leads" }
+  ]},
+  { name: "Ali", days: [
+    { date: "May 26", calls: 191, convos: 3, blocker: "CRM/technical issues", feedback: "Review on the Call" }
+  ]},
+  { name: "Alzana Bajrami", days: [
+    { date: "Jun 02", calls: 21, convos: 0, blocker: "Confidence", feedback: "Technical questions about Apollo — scheduled emails and finding personal phone numbers vs main business lines" }
+  ]},
+  { name: "Angelina", days: [
+    { date: "May 28", calls: 67, convos: 2, blocker: "CRM/technical issues", feedback: "—" },
+    { date: "May 29", calls: 40, convos: 3, blocker: "CRM/technical issues, Targeting", feedback: "—" }
+  ]},
+  { name: "Anisa Rama", days: [
+    { date: "May 26", calls: 30, convos: 0, blocker: "Confidence", feedback: "—" },
+    { date: "May 27", calls: 77, convos: 0, blocker: "Confidence", feedback: "—" },
+    { date: "May 28", calls: 57, convos: 0, blocker: "Confidence", feedback: "—" },
+    { date: "May 29", calls: 152, convos: 5, blocker: "Objection handling", feedback: "—" },
+    { date: "Jun 01", calls: 0, convos: 0, blocker: "Sequence quality", feedback: "No sequences — account transfer" },
+    { date: "Jun 02", calls: 52, convos: 0, blocker: "Confidence", feedback: "—" },
+    { date: "Jun 03", calls: 67, convos: 1, blocker: "Confidence", feedback: "—" }
+  ]},
+  { name: "Arb Aliu", days: [
+    { date: "May 26", calls: 80, convos: 1, blocker: "Sequence quality, CRM/technical issues", feedback: "Leads / credits" }
+  ]},
+  { name: "Ardian Kacaniku", days: [
+    { date: "Jun 02", calls: 90, convos: 7, blocker: "Objection handling", feedback: "We are working with my TL to improve more and more" },
+    { date: "Jun 03", calls: 125, convos: 9, blocker: "Objection handling", feedback: "My TL is giving consistent and constructive feedback" }
+  ]},
+  { name: "Armend Duraku", days: [
+    { date: "May 26", calls: 92, convos: 2, blocker: "Targeting, Sequence quality", feedback: "Had training session with Megi — discussed next steps on personas and competitors" }
+  ]},
+  { name: "Dafina", days: [
+    { date: "May 26", calls: 40, convos: 2, blocker: "CRM/technical issues, Sequence quality", feedback: "Feedback on emails sent today" },
+    { date: "May 27", calls: 50, convos: 0, blocker: "Sequence quality, CRM/technical issues", feedback: "—" },
+    { date: "May 28", calls: 17, convos: 1, blocker: "Sequence quality, CRM/technical issues", feedback: "Generic" },
+    { date: "Jun 01", calls: 25, convos: 0, blocker: "Targeting", feedback: "All good for now" },
+    { date: "Jun 02", calls: 0, convos: 0, blocker: "Targeting", feedback: "—" },
+    { date: "Jun 03", calls: 25, convos: 1, blocker: "Confidence", feedback: "Nothing at this moment" }
+  ]},
+  { name: "Edona Mustafa", days: [
+    { date: "May 26", calls: 125, convos: 2, blocker: "Personal issues", feedback: "Closing for meetings (so they don't drift off)" },
+    { date: "May 27", calls: 130, convos: 1, blocker: "Personal issues, Confidence", feedback: "Closing for meetings" },
+    { date: "May 28", calls: 120, convos: 2, blocker: "Personal issues", feedback: "Objection handling when prospects are sceptical" },
+    { date: "Jun 01", calls: 201, convos: 1, blocker: "Sequence quality", feedback: "Email quality" }
+  ]},
+  { name: "Elena Ristovska", days: [
+    { date: "May 26", calls: 156, convos: 0, blocker: "Sequence quality, CRM/technical issues", feedback: "Apollo has been lagging, emails blocked, calls sometimes drop — it's chaotic and I'm trying to manage" },
+    { date: "May 27", calls: 96, convos: 3, blocker: "CRM/technical issues", feedback: "Saving Apollo credits until EOM. Had meeting with TL, dropping new ideas to implement from Monday" },
+    { date: "May 28", calls: 69, convos: 2, blocker: "CRM/technical issues", feedback: "TL has been great, gives feedback and checks in all the time" },
+    { date: "May 29", calls: 143, convos: 0, blocker: "CRM/technical issues", feedback: "Wasted ALL credits on calling, nothing happening. Tried LinkedIn ABM — sent connections to all ICP prospects in hot companies" },
+    { date: "Jun 01", calls: 129, convos: 3, blocker: "CRM/technical issues", feedback: "Only connected call was to someone who no longer works at the company. Bought Miami number, recording video reels for LinkedIn, creating Calendly for pre-qualifying prospects" },
+    { date: "Jun 02", calls: 170, convos: 1, blocker: "CRM/technical issues", feedback: "Pick up rate is very low. Changed to Miami number but same result. Planning to research country codes" }
+  ]},
+  { name: "Elida", days: [
+    { date: "May 26", calls: 270, convos: 1, blocker: "Targeting", feedback: "Whatever she thinks I need right now" },
+    { date: "May 27", calls: 100, convos: 2, blocker: "Targeting", feedback: "Open for anything" },
+    { date: "May 28", calls: 71, convos: 2, blocker: "Targeting", feedback: "Anything" },
+    { date: "May 29", calls: 80, convos: 1, blocker: "CRM/technical issues", feedback: "Anything" },
+    { date: "Jun 03", calls: 0, convos: 2, blocker: "Time management", feedback: "Anything" }
+  ]},
+  { name: "Erblin Ramusa", days: [
+    { date: "May 28", calls: 88, convos: 5, blocker: "Sequence quality", feedback: "What to improve on differences on product" }
+  ]},
+  { name: "Erjon Raka", days: [
+    { date: "May 26", calls: 409, convos: 2, blocker: "CRM/technical issues", feedback: "Anything" }
+  ]},
+  { name: "George", days: [
+    { date: "May 26", calls: 156, convos: 10, blocker: "Objection handling", feedback: "CTA and value proposition" },
+    { date: "May 27", calls: 100, convos: 14, blocker: "Time management", feedback: "Tips for closing for meetings" },
+    { date: "May 28", calls: 100, convos: 0, blocker: "Confidence, CRM/technical issues, Personal issues", feedback: "Didn't speak to anyone today" },
+    { date: "May 29", calls: 120, convos: 3, blocker: "CRM/technical issues, Objection handling", feedback: "Nothing for now, she's an amazing TL" },
+    { date: "Jun 01", calls: 261, convos: 5, blocker: "Objection handling, Sequence quality", feedback: "Nothing as of yet" },
+    { date: "Jun 02", calls: 201, convos: 0, blocker: "Personal issues", feedback: "Just want to catch up and see on getting new prospects and sequences" },
+    { date: "Jun 03", calls: 201, convos: 8, blocker: "Objection handling, Sequence quality", feedback: "More training on objection handling and how to close out a call for a meeting" }
+  ]},
+  { name: "Josh G.", days: [
+    { date: "May 26", calls: 80, convos: 3, blocker: "CRM/technical issues, Objection handling", feedback: "How to handle people who are on vacation but answered the phone" },
+    { date: "May 27", calls: 102, convos: 5, blocker: "Objection handling, CRM/technical issues", feedback: "How the call went and how I could have done it better" },
+    { date: "Jun 01", calls: 103, convos: 3, blocker: "CRM/technical issues, Objection handling", feedback: "How to improve my tone in the opener" }
+  ]},
+  { name: "Leart", days: [
+    { date: "May 26", calls: 41, convos: 4, blocker: "Objection handling", feedback: "—" }
+  ]},
+  { name: "Liza", days: [
+    { date: "May 26", calls: 85, convos: 3, blocker: "Objection handling, Confidence, Targeting", feedback: "TL gives great support and genuinely cares about helping us improve" },
+    { date: "May 27", calls: 54, convos: 3, blocker: "CRM/technical issues", feedback: "Ways to keep control of the conversation while addressing objections" }
+  ]},
+  { name: "Mac Torralba", days: [
+    { date: "May 26", calls: 0, convos: 0, blocker: "Targeting", feedback: "Self prospecting lead quality" }
+  ]},
+  { name: "Mercedes Sabels", days: [
+    { date: "May 26", calls: 46, convos: 8, blocker: "Objection handling", feedback: "What to say when they ask where did we get their number?" },
+    { date: "May 27", calls: 76, convos: 8, blocker: "Objection handling", feedback: "Asked everything in real time to not keep having doubts" },
+    { date: "May 28", calls: 54, convos: 7, blocker: "Confidence", feedback: "Just some call recordings would help" },
+    { date: "May 29", calls: 99, convos: 5, blocker: "Confidence", feedback: "Confidence" },
+    { date: "Jun 01", calls: 110, convos: 8, blocker: "Confidence", feedback: "Planning a shadowing session — think it would help a lot" },
+    { date: "Jun 02", calls: 102, convos: 6, blocker: "Confidence", feedback: "How to give better arguments" }
+  ]},
+  { name: "Metodi Atanasov", days: [
+    { date: "May 26", calls: 378, convos: 70, blocker: "CRM/technical issues", feedback: "N/A" },
+    { date: "May 26", calls: 240, convos: 6, blocker: "CRM/technical issues", feedback: "N/A" },
+    { date: "May 27", calls: 423, convos: 53, blocker: "Time management", feedback: "N/A" },
+    { date: "May 27", calls: 252, convos: 3, blocker: "Time management", feedback: "N/A" },
+    { date: "May 29", calls: 419, convos: 31, blocker: "Time management", feedback: "N/A" },
+    { date: "May 29", calls: 374, convos: 6, blocker: "CRM/technical issues", feedback: "N/A" },
+    { date: "May 29", calls: 128, convos: 9, blocker: "CRM/technical issues", feedback: "N/A" },
+    { date: "Jun 01", calls: 402, convos: 16, blocker: "CRM/technical issues", feedback: "N/A" },
+    { date: "Jun 01", calls: 105, convos: 5, blocker: "Time management", feedback: "N/A" },
+    { date: "Jun 02", calls: 326, convos: 26, blocker: "Time management", feedback: "N/A" },
+    { date: "Jun 02", calls: 119, convos: 9, blocker: "Time management", feedback: "N/A" },
+    { date: "Jun 03", calls: 402, convos: 16, blocker: "Time management", feedback: "N/A" },
+    { date: "Jun 03", calls: 181, convos: 7, blocker: "Time management", feedback: "N/A" },
+    { date: "Jun 03", calls: 81, convos: 2, blocker: "Time management, CRM/technical issues", feedback: "N/A" }
+  ]},
+  { name: "Mike", days: [
+    { date: "May 26", calls: 128, convos: 5, blocker: "CRM/technical issues", feedback: "N/A" },
+    { date: "May 27", calls: 103, convos: 1, blocker: "Time management", feedback: "Nothing" }
+  ]},
+  { name: "Mirjeta Dreshaj", days: [
+    { date: "May 26", calls: 61, convos: 0, blocker: "Sequence quality", feedback: "My emails" },
+    { date: "May 27", calls: 34, convos: 1, blocker: "Confidence, Objection handling", feedback: "Listen to my call and give me feedback please" },
+    { date: "May 28", calls: 40, convos: 0, blocker: "Sequence quality", feedback: "Motivation ;)" },
+    { date: "Jun 02", calls: 75, convos: 3, blocker: "Confidence, Time management", feedback: "Time management — I really do need help on that" }
+  ]},
+  { name: "Moira", days: [
+    { date: "May 26", calls: 150, convos: 0, blocker: "Personal issues", feedback: "N/A" },
+    { date: "May 27", calls: 150, convos: 0, blocker: "Personal issues", feedback: "I am not sure" },
+    { date: "May 28", calls: 100, convos: 0, blocker: "Personal issues", feedback: "Anything he sees fit" }
+  ]},
+  { name: "Olia Kozomora", days: [
+    { date: "May 26", calls: 107, convos: 0, blocker: "Time management, Sequence quality", feedback: "Focus on LinkedIn outreach — pursuing it more than calls" },
+    { date: "May 28", calls: 58, convos: 3, blocker: "Objection handling, Targeting", feedback: "LinkedIn outreach — want to pursue this the most" },
+    { date: "May 28", calls: 102, convos: 1, blocker: "Time management, Targeting", feedback: "LinkedIn outreach as main communication channel" },
+    { date: "Jun 02", calls: 50, convos: 0, blocker: "Time management, Personal issues", feedback: "LinkedIn messaging and appearance of my LinkedIn profile" },
+    { date: "Jun 02", calls: 104, convos: 5, blocker: "Sequence quality, Targeting", feedback: "Advice on time management and how to have a more organized cadence/daily task flow" }
+  ]},
+  { name: "Orce Bojcev", days: [
+    { date: "May 26", calls: 178, convos: 2, blocker: "Sequence quality", feedback: "—" },
+    { date: "May 27", calls: 145, convos: 3, blocker: "Sequence quality", feedback: "—" }
+  ]},
+  { name: "Orhidea Zeneli", days: [
+    { date: "May 26", calls: 120, convos: 0, blocker: "Sequence quality", feedback: "Confidence, LinkedIn Messaging, Email quality, Sequence steps" },
+    { date: "May 27", calls: 125, convos: 0, blocker: "Sequence quality", feedback: "Whatever TL sees fit" },
+    { date: "May 28", calls: 100, convos: 1, blocker: "CRM/technical issues", feedback: "Whatever TL decides on" },
+    { date: "May 29", calls: 156, convos: 0, blocker: "Sequence quality, Targeting, CRM/technical issues", feedback: "Whatever Maria sees fit" },
+    { date: "Jun 01", calls: 50, convos: 1, blocker: "CRM/technical issues, Sequence quality", feedback: "Whatever Maria sees fit" },
+    { date: "Jun 02", calls: 70, convos: 1, blocker: "Sequence quality, Targeting, CRM/technical issues", feedback: "—" },
+    { date: "Jun 03", calls: 72, convos: 2, blocker: "CRM/technical issues", feedback: "—" }
+  ]},
+  { name: "Othmen Souid", days: [
+    { date: "May 26", calls: 501, convos: 4, blocker: "Sequence quality", feedback: "N/A" }
+  ]},
+  { name: "Rrezart", days: [
+    { date: "May 26", calls: 85, convos: 6, blocker: "Sequence quality", feedback: "My opener, and maybe closing for meetings" },
+    { date: "May 27", calls: 106, convos: 5, blocker: "Objection handling", feedback: "How to deal with people that have a wobbly English" }
+  ]},
+  { name: "Verica Papakoca", days: [
+    { date: "May 26", calls: 224, convos: 3, blocker: "CRM/technical issues", feedback: "—" }
+  ]},
+  { name: "Vlad", days: [
+    { date: "May 26", calls: 48, convos: 4, blocker: "Confidence", feedback: "Recommend objection handlers" }
+  ]}
+];
+
+function totalCalls(sdr) {
+  return sdr.days.reduce((s, d) => s + d.calls, 0);
+}
+
+function renderSDRs(filter) {
+  const grid = document.getElementById('sdrGrid');
+  grid.innerHTML = '';
+  const filtered = filter
+    ? sdrs.filter(s => s.name.toLowerCase().includes(filter.toLowerCase()))
+    : sdrs;
+
+  filtered.forEach(sdr => {
+    const total = totalCalls(sdr);
+    const totalConvos = sdr.days.reduce((s, d) => s + d.convos, 0);
+    const card = document.createElement('div');
+    card.className = 'sdr-card';
+    card.innerHTML = `
+      <div class="sdr-header" onclick="toggleCard(this.parentElement)">
+        <div>
+          <div class="sdr-name">${sdr.name}</div>
+          <div class="sdr-meta">${sdr.days.length} day${sdr.days.length > 1 ? 's' : ''} · ${total.toLocaleString()} calls · ${totalConvos} convos</div>
+        </div>
+        <div class="sdr-chevron">▼</div>
+      </div>
+      <div class="sdr-body">
+        ${sdr.days.map(d => `
+          <div class="sdr-day">
+            <div class="sdr-day-date">${d.date}</div>
+            <div class="sdr-row">
+              <div class="sdr-pill">Calls <span>${d.calls}</span></div>
+              <div class="sdr-pill">Convos <span>${d.convos}</span></div>
+            </div>
+            <div class="sdr-pill" style="margin-top:5px;display:inline-block;">Blocker <span>${d.blocker}</span></div>
+            <div class="sdr-feedback"><strong>TL Feedback request:</strong> ${d.feedback}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function toggleCard(card) {
+  card.classList.toggle('open');
+}
+
+function filterSDRs(val) {
+  renderSDRs(val);
+}
+
+renderSDRs();
+</script>
+</body>
+</html>
